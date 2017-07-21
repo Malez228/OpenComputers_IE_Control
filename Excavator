@@ -1,0 +1,109 @@
+local component = require("component")
+local keyboard = require("keyboard")
+local unicode = require("unicode")
+local event = require("event")
+local term = require("term")
+local GUI = require("GUI")
+local gpu = component.gpu
+local ex
+
+if not component.isAvailable("ie_excavator") then
+	error("Этой программе требуется экскаватор из мода Immersivee Engineering.")
+	return
+else
+	ex = component.ie_excavator
+end
+
+function touch(_, _, x, y)
+	if x >= 30 and x < 33 and y>=1 and y<=1 then
+		Exit = true
+	elseif x >= 2 and x<13 and y>=3 and y<=5 then
+		ex.setEnabled(true)
+		status = true
+	elseif x >= 2 and x<13 and y>=7 and y<=9 then
+		ex.setEnabled(false)
+		status = false
+	end
+end
+
+function DrawStatus()
+	GUI.DrawText(2, 1, "Экскаватор - ", 0x333333, 0xFFFFFF)
+	if status then
+		GUI.DrawRect(23, 1, 26, 2, 0xFFFFFF, 0xFFFFFF)
+		GUI.DrawText(15, 1, "работает", 0x00b300, 0xFFFFFF)
+	else
+		GUI.DrawText(15, 1, "простаивает", 0xb30000, 0xFFFFFF)
+	end
+end
+
+function loop()
+	EnS = ex.getEnergyStored()
+	local isStatusDraw = false
+
+	while true do
+		os.sleep(0.2)
+
+		if Exit then
+			event.ignore('touch', touch)
+			local com = require("component")
+			com.gpu.setBackground(0x222222)
+			com.gpu.setResolution(com.gpu.maxResolution())
+			term.clear()
+			return
+		end
+
+		EnS2 = ex.getEnergyStored()
+		if not isStatusDraw then
+			if EnS == EnS2 then
+				status = false
+			else
+				status = true
+			end		
+			EnS = EnS2
+			isStatusDraw = true
+		end
+		DrawStatus()
+
+		local EnergyPercent = math.floor(EnS2 / MaxEn * 100)
+
+		--ProgressBarText
+		GUI.SetColor(0x333333, 0xFFFFFF)
+		term.setCursor(15, 8)
+		term.write(EnS2 .. "/" .. MaxEn)
+
+		GUI.SetColor(0xFFFFFF, 0xFFFFFF)
+		if (gpu.get(19, 8) == "/") then
+			gpu.set(25, 8, ' ')
+		elseif (gpu.get(18, 8) == "/") then
+			gpu.set(24, 8, ' ')
+		end
+
+		GUI.DrawProgressBar(15, 9, 11, 1, 0x00b300, 0xFFFFFF, EnergyPercent)
+
+		GUI.DrawButton(30, 1, {"▌"}, false, 0x333333, 0xFFFFFF)
+		GUI.DrawButton(31, 1, {"←╴"}, false)
+	end
+end
+
+local Exit = false
+
+local FColor, BColor = GUI.GetColor()
+
+local Oldw, Oldh = component.gpu.getResolution()
+local w, h = 32, 10
+component.gpu.setResolution(w, h)
+GUI.DrawRect(1, 1, w, h, 0x333333, 0xFFFFFF)
+
+GUI.DrawText(2, 1, "Экскаватор", 0x333333, 0xFFFFFF)
+
+GUI.DrawButton(2, 3, {"", "Включить ", ""}, true)
+GUI.DrawButton(2, 7, {"", "Выключить", ""}, true)
+
+GUI.DrawButton(30, 1, {"▌"}, false, 0x333333, 0xFFFFFF)
+GUI.DrawButton(31, 1, {"←╴"}, false)
+
+local status
+MaxEn = ex.getMaxEnergyStored()
+
+event.listen('touch', touch)
+loop()
