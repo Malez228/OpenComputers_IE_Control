@@ -47,7 +47,7 @@ function GUI.DrawButton(x, y, text, isDeep, colorF, colorB)
 	line = nil
 
 	if isDeep then
-		GUI.DrawRect(x, y, MaxString + 2, #text, 0xFFFFFF, 0x333333)
+		GUI.DrawRect(x, y, MaxString + 2, #text, colorF, colorB)
 		
 		local yPos = y
 		for i = 1, #text do
@@ -60,7 +60,7 @@ function GUI.DrawButton(x, y, text, isDeep, colorF, colorB)
 		end
 		yPos = nil
 	else
-		GUI.DrawRect(x, y, MaxString, #text, 0xFFFFFF, 0x333333)
+		GUI.DrawRect(x, y, MaxString, #text, colorF, colorB)
 		
 		local yPos = y
 		for i = 1, #text do

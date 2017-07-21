@@ -1,5 +1,4 @@
 local component = require("component")
-local keyboard = require("keyboard")
 local unicode = require("unicode")
 local event = require("event")
 local term = require("term")
@@ -27,12 +26,12 @@ function touch(_, _, x, y)
 end
 
 function DrawStatus()
-	GUI.DrawText(2, 1, "Экскаватор - ", 0x333333, 0xFFFFFF)
+	GUI.DrawText(2, 1, "Экскаватор - ", 0x333333, 0xcccccc)
 	if status then
-		GUI.DrawRect(23, 1, 26, 2, 0xFFFFFF, 0xFFFFFF)
-		GUI.DrawText(15, 1, "работает", 0x00b300, 0xFFFFFF)
+		GUI.DrawRect(23, 1, 26, 1, 0xFFFFFF, 0xcccccc)
+		GUI.DrawText(15, 1, "работает", 0x00b300, 0xcccccc)
 	else
-		GUI.DrawText(15, 1, "простаивает", 0xb30000, 0xFFFFFF)
+		GUI.DrawText(15, 1, "простаивает", 0xb30000, 0xcccccc)
 	end
 end
 
@@ -80,8 +79,8 @@ function loop()
 
 		GUI.DrawProgressBar(15, 9, 11, 1, 0x00b300, 0xFFFFFF, EnergyPercent)
 
-		GUI.DrawButton(30, 1, {"▌"}, false, 0x333333, 0xFFFFFF)
-		GUI.DrawButton(31, 1, {"←╴"}, false)
+		GUI.DrawButton(30, 1, {"▌"}, false, 0xcccccc, 0x333333)
+		GUI.DrawButton(31, 1, {"←╴"}, false, 0xcccccc, 0x333333)
 	end
 end
 
@@ -89,18 +88,18 @@ local Exit = false
 
 local FColor, BColor = GUI.GetColor()
 
-local Oldw, Oldh = component.gpu.getResolution()
 local w, h = 32, 10
 component.gpu.setResolution(w, h)
 GUI.DrawRect(1, 1, w, h, 0x333333, 0xFFFFFF)
 
-GUI.DrawText(2, 1, "Экскаватор", 0x333333, 0xFFFFFF)
+GUI.DrawRect(1, 1, w, 1, 0xcccccc, 0xcccccc)
+GUI.DrawText(2, 1, "Экскаватор", 0x333333, 0xcccccc)
 
 GUI.DrawButton(2, 3, {"", "Включить ", ""}, true)
 GUI.DrawButton(2, 7, {"", "Выключить", ""}, true)
 
-GUI.DrawButton(30, 1, {"▌"}, false, 0x333333, 0xFFFFFF)
-GUI.DrawButton(31, 1, {"←╴"}, false)
+GUI.DrawButton(30, 1, {"▌"}, false, 0xcccccc, 0x333333)
+GUI.DrawButton(31, 1, {"←╴"}, false, 0xcccccc, 0x333333)
 
 local status
 MaxEn = ex.getMaxEnergyStored()
