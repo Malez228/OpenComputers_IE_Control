@@ -1,0 +1,248 @@
+local component = require("component")
+local unicode = require("unicode")
+local event = require("event")
+local term = require("term")
+local GUI = require("GUI")
+local gpu = component.gpu
+local as
+
+if not component.isAvailable("ie_assembler") then
+	error("Этой программе требуется сборшик из мода Immersivee Engineering.")
+	return
+else
+	as = component.ie_assembler
+end
+
+function DrawStatus()
+	GUI.DrawText(2, 1, "Сборщик - ", 0x333333, 0xcccccc)
+	if status then
+		GUI.DrawRect(23, 1, 26, 1, 0xFFFFFF, 0xcccccc)
+		GUI.DrawText(17, 1, "работает", 0x00b300, 0xcccccc)
+	else
+		GUI.DrawText(17, 1, "простаивает", 0xb30000, 0xcccccc)
+	end
+end
+
+function touch(_, _, x, y)
+	if x >= (w - 2) and x < (w + 1) and y >= 1 and y <= 1 then
+		Exit = true
+	elseif x >= (w - 13) and x < w-2 and y >= 4 and y <= 6 then
+		as.setEnabled(true)
+	elseif x >= (w - 13) and x < w-2 and y >= 8 and y <= 10 then
+		ie_assembler.setEnabled(false)
+	end
+end
+
+function DrawGridElectrode(x, y, width, height, row, column)
+
+	local function GetDamageColor(damage)
+		if damage >= 0 and damage <= 19000 then
+			return 0x00b300
+		elseif damage >= 19000 and damage <= 38000 then
+			return 0x59b300
+		elseif damage >= 38000 and damage <= 57000 then
+			return 0xb3b300
+		elseif damage >= 57000 and damage <= 76000 then
+			return 0xb35900
+		elseif damage >= 76000 then
+			return 0xb30000
+		end
+	end
+
+	local slot = 1
+	for i = 1, column do
+		for j = 1, row do
+			local Electrode = fu.getElectrode(slot)
+
+			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2, width, height, 0x696969, 0x696969)
+
+			if Electrode.damage then
+				GUI.DrawText(x + i * width + i - 2, y + j * height - 2, "▀", 0x111111, 0x696969)
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 2, "▄", 0x111111, 0x696969)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 1, "▀", 0x111111, 0x696969)
+				GUI.DrawText(x + i * width + i - 5, y + j * height - 1, "▄", 0x111111, 0x696969)
+
+				local ProgressColor = GetDamageColor(Electrode.damage)
+				GUI.DrawText(x + i * width + i - 1, y, "▌", ProgressColor, 0xFFFFFF)
+				GUI.DrawText(x + i * width + i - 1, y + 1, "▌", ProgressColor, 0xFFFFFF)
+			else
+				GUI.DrawRect(x + i * width + i - 1, y, 1, 2, 0xFFFFFF, 0xFFFFFF)
+			end
+
+			slot = slot + 1
+			Electrode = nil
+		end
+	end
+end
+
+function DrawGridInput(x, y, width, height, row, column)
+	local slot = 1
+
+	local function GetProgressColor(percent)
+		if percent >= 0 and percent <= 20 then
+			return 0x3d0000
+		elseif percent >= 20 and percent <= 40 then
+			return 0xae0000
+		elseif percent >= 40 and percent <= 60 then
+			return 0xD93700
+		elseif percent >= 60 and percent <= 80 then
+			return 0xFF9F23
+		elseif percent >= 80 then
+			return 0xFFFF7C
+		else
+			return 0xFFFFFF
+		end
+	end
+
+	for j = 1, row do
+		for i = 1, column do
+			local Metall = fu.getInputStack(slot)
+
+			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
+
+			if Metall then
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 2 + j, "▄", 0xc6c6c6, 0x696969)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 2 + j, "▄", 0xc6c6c6, 0x696969)
+				GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)
+				GUI.DrawText(x + i * width + i - 5, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)				
+
+				local ProgressColor = GetProgressColor(Metall.progress / Metall.maxProgress * 100)
+				GUI.DrawText(x + i * width + i - 1, y + j * height - 2 + j, "▌", ProgressColor, 0xFFFFFF)
+				GUI.DrawText(x + i * width + i - 1, y + j * height - 1 + j, "▌", ProgressColor, 0xFFFFFF)
+			else
+				GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
+			end
+			slot = slot + 1
+		end
+	end
+end
+
+function DrawGridAdditive(x, y, width, height, row, column)
+	local slot = 1
+
+	for j = 1, row do
+		for i = 1, column do
+			local Dust = fu.getAdditiveStack(slot)
+
+			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
+
+			if Dust then
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 2 + j, "▄", 0x333333, 0x111111)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 2 + j, "▄", 0x333333, 0x111111)
+				GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, "▀", 0x111111, 0x696969)
+				GUI.DrawText(x + i * width + i - 5, y + j * height - 1 + j, "▀", 0x111111, 0x696969)
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, "▀", 0x333333, 0x111111)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 1 + j, "▀", 0x333333, 0x111111)
+			end
+
+			slot = slot + 1
+		end
+	end
+end
+
+function DrawGridOutput(x, y, width, height, row, column)
+	local slot = 1
+
+	for j = 1, row do
+		for i = 1, column do
+			local NewMetall = fu.getOutputStack(slot)
+
+			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
+
+			if NewMetall then
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 2 + j, "▄", 0xB8E0E0, 0x696969)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 2 + j, "▄", 0xB8E0E0, 0x696969)
+				GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
+				GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
+				GUI.DrawText(x + i * width + i - 4, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
+				GUI.DrawText(x + i * width + i - 5, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
+			end
+
+			slot = slot + 1
+		end
+	end
+end
+
+function DrawRectSlag(x, y, width, height)
+	local Slag = fu.getSlagStack()
+
+	GUI.DrawRect(x + 10, y + 1, width, height, 0x696969, 0x696969)
+
+	if Slag then
+		GUI.DrawText(x + 13, y + 1, "▄", 0xBC9685, 0x696969)
+		GUI.DrawText(x + 12, y + 1, "█", 0x604C44, 0xFFFFFF)
+		GUI.DrawText(x + 11, y + 1, "▄", 0x96776A, 0xBC9685)
+		GUI.DrawText(x + 10, y + 1, "▄", 0xA88677, 0x604C44)
+		GUI.DrawText(x + 13, y + 2, "█", 0xA88677, 0xFFFFFF)
+		GUI.DrawText(x + 12, y + 2, "▄", 0x96776A, 0xBC9685)
+		GUI.DrawText(x + 11, y + 2, "▄", 0x604C44, 0xA88677)
+		GUI.DrawText(x + 10, y + 2, "▄", 0x696969, 0xBC9685)
+	end
+end
+
+function loop()
+	EnS = fu.getEnergyStored()
+
+	while true do
+		os.sleep(0.2)
+
+		status = fu.isActive()
+
+		if Exit then
+			event.ignore('touch', touch)
+			local com = require("component")
+			com.gpu.setBackground(0x222222)
+			com.gpu.setResolution(com.gpu.maxResolution())
+			term.clear()
+			return
+		end
+		EnS2 = fu.getEnergyStored()
+
+		DrawStatus()
+		DrawGridElectrode(28, 4, 4, 2, 1, 3)
+		DrawGridInput(10, 7, 4, 2, 4, 3)
+		DrawGridAdditive(43, 7, 4, 2, 2, 2)
+		DrawGridOutput(28, 13, 4, 2, 2, 3)
+		DrawRectSlag(33, 16, 4, 2)
+
+		--ProgressBarText
+		local EnergyPercent = math.floor(EnS2 / MaxEn * 100)
+		GUI.SetColor(0x333333, 0xFFFFFF)
+		term.setCursor(w - 12, h - 2)
+		term.write(EnS2 .. "/" .. MaxEn)
+
+		GUI.SetColor(0xFFFFFF, 0xFFFFFF)
+		if (gpu.get(w - 8, h - 2) == "/") then
+			gpu.set(w - 2, h - 2, ' ')
+		elseif (gpu.get(w - 7, h - 2) == "/") then
+			gpu.set(w - 1, h - 2, ' ')
+		end
+
+		GUI.DrawProgressBar(w - 12, h - 1, 11, 1, 0x00b300, 0xFFFFFF, EnergyPercent)
+
+		GUI.DrawButton(w - 2, 1, {"▌"}, false, 0xcccccc, 0x333333)
+		GUI.DrawButton(w - 1, 1, {"←╴"}, false, 0xcccccc, 0x333333)
+	end
+end
+
+local Exit = false
+local status
+MaxEn = fu.getMaxEnergyStored()
+
+status = fu.isActive()
+
+w, h = 80, 25
+component.gpu.setResolution(w, h)
+GUI.DrawRect(1, 1, w, h, 0x333333, 0xFFFFFF)
+GUI.DrawRect(1, 1, w, 1, 0x333333, 0xcccccc)
+
+GUI.DrawButton(w - 13, 4, {"", "Включить  ", ""}, true)
+GUI.DrawButton(w - 13, 8, {"", "Выключить ", ""}, true)
+
+GUI.DrawButton(w - 2, 1, {"▌"}, false, 0xcccccc, 0x333333)
+GUI.DrawButton(w - 1, 1, {"←╴"}, false, 0xcccccc, 0x333333)
+
+event.listen('touch', touch)
+loop()

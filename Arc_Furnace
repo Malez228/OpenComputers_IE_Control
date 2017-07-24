@@ -13,6 +13,67 @@ else
 	fu = component.ie_arc_furnace
 end
 
+function Split(inputstr, sep)
+	if sep == nil then
+		sep = " "
+	elseif sep == '.' then
+		if inputstr then
+			local Words = {}
+			local s = inputstr
+
+			while true do
+				local wordJoins = s:find('%.')
+
+				if wordJoins then
+					table.insert(Words, string.sub(s, wordJoins + 1))
+					s = s:sub(wordJoins + 1)
+				else
+					return Words
+				end
+			end
+		else
+			return inputstr
+		end
+	else
+		if inputstr then
+			local Words = {}
+			local s = inputstr
+
+			while true do
+				local wordJoins = s:find(sep)
+
+				if wordJoins then
+					table.insert(Words, string.sub(s, wordJoins + 1))
+					s = s:sub(wordJoins + 1)
+				else
+					return Words
+				end
+			end
+		else
+			return inputstr
+		end
+	end	
+end
+
+--[[
+function Split(inputstr, sep)
+	if sep == nil then
+		sep = "%s"
+	end
+
+	local t={} ; i=1
+
+	if inputstr then
+		for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+				t[i] = str
+				i = i + 1
+		end
+		return t
+	else
+		return inputstr
+    end
+end]]
+
 function DrawStatus()
 	GUI.DrawText(2, 1, "Дуговая печь - ", 0x333333, 0xcccccc)
 	if status then
@@ -75,8 +136,441 @@ function DrawGridElectrode(x, y, width, height, row, column)
 	end
 end
 
+function DrawIngot(x, y, ColorF, ColorB)
+	GUI.DrawText(x + 1, y, "▄", ColorF, ColorB)
+	GUI.DrawText(x + 2, y, "▄", ColorF, ColorB)
+	GUI.DrawText(x + 3, y + 1, "█", ColorF, ColorB)
+	GUI.DrawText(x + 2, y + 1, "█", ColorF, ColorB)
+	GUI.DrawText(x + 1, y + 1, "█", ColorF, ColorB)
+	GUI.DrawText(x, y + 1, "█", ColorF, ColorB)
+end
+
+function DrawDust(x, y, ColorF, ColorB)
+	GUI.DrawText(x + 3, y, "▄", 0x111111, ColorB)
+	GUI.DrawText(x + 2, y, "▄", ColorF, 0x111111)
+	GUI.DrawText(x + 1, y, "▄", ColorF, 0x111111)
+	GUI.DrawText(x, y, "▄", 0x111111, ColorB)
+	GUI.DrawText(x, y + 1, "▀", 0x111111, ColorB)
+	GUI.DrawText(x + 1, y + 1, "▀", ColorF, 0x111111)
+	GUI.DrawText(x + 2, y + 1, "▀", ColorF, 0x111111)
+	GUI.DrawText(x + 3, y + 1, "▀", 0x111111, ColorB)
+end
+
+function DrawOre(x, y, ColorF, ColorB)
+	GUI.DrawText(x, y, "▄", ColorB, ColorB)
+	GUI.DrawText(x + 1, y, "▄", ColorF, ColorB)
+	GUI.DrawText(x + 2, y, "▄", ColorB, ColorB)
+	GUI.DrawText(x + 3, y, "▄", ColorB, ColorF)
+	GUI.DrawText(x, y + 1, "▄", ColorB, ColorF)
+	GUI.DrawText(x + 1, y + 1, "▄", ColorB, ColorB)
+	GUI.DrawText(x + 2, y + 1, "▄", ColorF, ColorB)
+	GUI.DrawText(x + 3, y + 1, "▄", ColorB, ColorB)
+end
+
+local Colors = {
+	Copper = 0x9F5C28,
+	Tin = 0xBDDFE6,
+	Silver = 0xDDDDDD,
+	Iron = 0xc6c6c6,
+	Gold = 0xFFEC65,
+	Lead = 0x818FBF,
+	Obsidian = 0x362B4F,
+	Bronze = 0xFFA34E,
+	Aluminum = 0xEDEDED,
+	Nickel = 0xF6F8BD,
+	Platinum = 0x62D1F3,
+	Electrum = 0xB0B64D,
+	Invar = 0x929D97,
+	Signalum = 0xDD3B00,
+	Lumium = 0xF1F8DF,
+	Mithril = 0x628491,
+	Enderium = 0x0D5758,
+	EnergeticAlloy = 0xF24613,
+
+	Coal = 0x333333,
+	Silicon = 0x6E7073,
+	Redstone = 0xCC0000,
+	Glowstone = 0x2FFFF00,
+	HOPGraphite = 0x222222,
+	Constantan = 0xFA8969,
+	Osmium = 0xAABCD1
+}
+
+local DustNamesU = {
+	Copper = {
+		IC2 = "itemDustCopper",
+		TEx = "dustCopper",
+		Mek = "copperDust",
+		End = "powderCopper"
+	},
+	Tin = {
+		IC2 = "itemDustTin",
+		TEx = "dustTin",
+		Mek = "tinDust",
+		End = "powderTin"
+	},
+	Silver = {
+		IC2 = "itemDustSilver",
+		TEx = "dustSilver",
+		Mek = "silverDust",
+		End = "powderSilver"
+	},
+	Iron = {
+		IC2 = "itemDustIron",
+		TEx = "dustIron",
+		Mek = "ironDust",
+		End = "powderIron"
+	},
+	Gold = {
+		IC2 = "itemDustGold",
+		TEx = "dustGold",
+		Mek = "goldDust",
+		End = "powderGold"
+	},
+	Lead = {
+		IC2 = "itemDustLead",
+		TEx = "dustLead",
+		Mek = "leadDust",
+		End = "powderLead"
+	},
+	Obsidian = {
+		IC2 = "itemDustObsidian",
+		TEx = "dustObsidian",
+		Mek = "obsidianDust",
+		End = "powderObsidian"
+	},
+	Bronze = {
+		IC2 = "itemDustBronze",
+		TEx = "dustBronze",
+		Mek = "bronzeDust",
+		End = "powderBronze"
+	},
+	Aluminum = {
+		IC2 = "itemDustAluminum",
+		TEx = "dustAluminum",
+		Mek = "AluminumDust",
+		End = "powderAluminum"
+	},
+	Nickel = {
+		IC2 = "itemDustNickel",
+		TEx = "dustNickel",
+		Mek = "nickelDust",
+		End = "powderNickel"
+	},
+	Platinum = {
+		IC2 = "itemDustPlatinum",
+		TEx = "dustPlatinum",
+		Mek = "platinumDust",
+		End = "powderPlatinum"
+	},
+	Electrum = {
+		IC2 = "itemDustElectrum",
+		TEx = "dustElectrum",
+		Mek = "electrumDust",
+		End = "powderElectrum"
+	},
+	Invar = {
+		IC2 = "itemDustInvar",
+		TEx = "dustInvar",
+		Mek = "invarDust",
+		End = "powderInvar"
+	},
+	Signalum = {
+		IC2 = "itemDustSignalum",
+		TEx = "dustSignalum",
+		Mek = "signalumDust",
+		End = "powderSignalum"
+	},
+	Lumium = {
+		IC2 = "itemDustLumium",
+		TEx = "dustLumium",
+		Mek = "lumiumDust",
+		End = "powderLumium"
+	},
+	Mithril = {
+		IC2 = "itemDustMythril",
+		TEx = "dustMythril",
+		Mek = "mythrilDust",
+		End = "powderMythril"
+	},
+	Enderium = {
+		IC2 = "itemDustEnderium",
+		TEx = "dustEnderium",
+		Mek = "enderiumDust",
+		End = "powderEnderium"
+	},
+	HOPGraphite = "dustHOPGraphite",
+	Constantan = "dustConstantan",
+	Osmium = "osmiumDust",
+}
+
+local DustNames = {
+	IC2 = "itemDust",
+	TEx = "material",
+	IEn = "metal",
+	Mek = {"Dust", "OtherDust"},
+	End = "itemPowderIngot",
+	TCo = "materials",
+
+	Copper = {
+		IC2 = 3,
+		TEx = 32,
+		IEn = 10,
+		Mek = 3,
+		End = 3
+	},
+	Silver = {
+		IC2 = 6,
+		TEx = 34,
+		IEn = 13,
+		Mek = 5
+	},
+	Iron = {
+		IC2 = 5,
+		TEx = 0,
+		IEn = 8,
+		Mek = 0,
+		End = 1
+	},
+	Gold = {
+		IC2 = 4,
+		TEx = 1,
+		IEn = 9,
+		Mek = 1,
+		End = 2
+	},
+	Obsidian = {
+		IC2 = 11,
+		TEx = 4,
+		Mek = 6,
+		End = 7
+	},
+	Aluminum = {
+		TCo = 40,
+		IEn = 11
+	},
+	Nickel = {
+		TEx = 36,
+		IEn = 14
+	},
+	Coal = {
+		TEx = 2,
+		End = 0,
+		IC2 = 2
+	}
+}
+
+function GetIngotColor(Ingot)
+	local name = Ingot.nameUnlocalized
+	if name then
+		name = Split(name, ".")[#Split(name, ".")]
+		if name == "ingotCopper" then
+			return Colors.Copper, "Copp"
+		elseif name == "ingotNickel" then
+			return Colors.Nickel, "Nick"
+		elseif name == "ingotIron" then
+			return Colors.Iron, "Iron"
+		elseif name == "ingotGold" then
+			return Colors.Gold, "Gold"
+		elseif name == "energeticAlloy" then
+			return Colors.EnergeticAlloy, "Ener"
+		end
+	else
+		name = Ingot.name
+		name = Split(name, ":")[#Split(name, ":")]
+		meta = Ingot.damage
+
+		if name == "iron_ingot" then
+			return Colors.Iron, "Iron"
+		elseif name == "gold_ingot" then
+			return Colors.Gold, "Gold"
+		elseif (name == "material" and meta == 64) then
+			return Colors.Copper, "Copp"
+		elseif (name == "material" and meta == 65) then
+			return Colors.Tin, "Tin "
+		elseif (name == "material" and meta == 66) then
+			return Colors.Silver, "Silv"
+		elseif (name == "material" and meta == 67) then
+			return Colors.Lead, "Lead"
+		elseif (name == "material" and meta == 68) then
+			return Colors.Nickel, "Nick"
+		elseif (name == "material" and meta == 69) then
+			return Colors.Platinum, "Plat"
+		elseif (name == "material" and meta == 70) then
+			return Colors.Mithril, "Mith"
+		elseif (name == "material" and meta == 71) then
+			return Colors.Electrum, "Elec"
+		elseif (name == "material" and meta == 72) then
+			return Colors.Invar, "Inva"
+		elseif (name == "material" and meta == 73) then
+			return Colors.Bronze, "Bron"
+		elseif (name == "material" and meta == 74) then
+			return Colors.Signalum, "Sign"
+		elseif (name == "material" and meta == 75) then
+			return Colors.Lumium, "Lumi"
+		elseif (name == "material" and meta == 76) then
+			return Colors.Enderium, "Ende"
+		elseif (name == "materials" and meta == 11) then
+			return Colors.Aluminum, "Allu"
+		elseif (name == "Ingot" and meta == 1) then
+			return Colors.Osmium, "Osmi"
+		elseif name == "BRIngot" and meta == 0 then
+			return Colors.Electrum, "Yell"
+		elseif name == "BRIngot" and meta == 1 then
+			return Colors.Platinum, "Cyan"
+		elseif name == "BRIngot" and meta == 2 then
+			return Colors.Coal, "Grap"
+		elseif name == "BRIngot" and meta == 3 then
+			return Colors.Mithril, "Blut"
+		end
+	end
+
+	return 0xFFFFFF, name
+end
+
+function GetDustColor(Dust)
+	local name1 = Dust.nameUnlocalized
+	if Split(name1, '.') then
+		name1 = Split(name1, '.')[#Split(name1, '.')]
+
+		if (name1 == DustNamesU.Copper.IC2) or (name1 == DustNamesU.Copper.TEx) or (name1 == DustNamesU.Copper.Mek) or (name1 == DustNamesU.Copper.End) then
+			return Colors.Copper, "Copp"
+		elseif (name1 == DustNamesU.Tin.IC2) or (name1 == DustNamesU.Tin.TEx) or (name1 == DustNamesU.Tin.Mek) or (name1 == DustNamesU.Tin.End) then
+			return Colors.Tin, "Tin "
+		elseif (name1 == DustNamesU.Silver.IC2) or (name1 == DustNamesU.Silver.TEx) or (name1 == DustNamesU.Silver.Mek) or (name1 == DustNamesU.Silver.End) then
+			return Colors.Silver, "Silv"
+		elseif (name1 == DustNamesU.Iron.IC2) or (name1 == DustNamesU.Iron.TEx) or (name1 == DustNamesU.Iron.Mek) or (name1 == DustNamesU.Iron.End) then
+			return Colors.Iron, "Iron"
+		elseif (name1 == DustNamesU.Gold.IC2) or (name1 == DustNamesU.Gold.TEx) or (name1 == DustNamesU.Gold.Mek) or (name1 == DustNamesU.Gold.End) then
+			return Colors.Gold, "Gold"
+		elseif (name1 == DustNamesU.Lead.IC2) or (name1 == DustNamesU.Lead.TEx) or (name1 == DustNamesU.Lead.Mek) or (name1 == DustNamesU.Lead.End) then
+			return Colors.Lead, "Lead"
+		elseif (name1 == DustNamesU.Obsidian.IC2) or (name1 == DustNamesU.Obsidian.TEx) or (name1 == DustNamesU.Obsidian.Mek) or (name1 == DustNamesU.Obsidian.End) then
+			return Colors.Obsidian, "Obsi"
+		elseif (name1 == DustNamesU.Bronze.IC2) or (name1 == DustNamesU.Bronze.TEx) or (name1 == DustNamesU.Bronze.Mek) or (name1 == DustNamesU.Bronze.End) then
+			return Colors.Bronze, "Bron"
+		elseif (name1 == DustNamesU.Aluminum.IC2) or (name1 == DustNamesU.Aluminum.TEx) or (name1 == DustNamesU.Aluminum.Mek) or (name1 == DustNamesU.Aluminum.End) then
+			return Colors.Aluminum, "Alum"
+		elseif (name1 == DustNamesU.Nickel.IC2) or (name1 == DustNamesU.Nickel.TEx) or (name1 == DustNamesU.Nickel.Mek) or (name1 == DustNamesU.Nickel.End) then
+			return Colors.Nickel, "Nick"
+		elseif (name1 == DustNamesU.Platinum.IC2) or (name1 == DustNamesU.Platinum.TEx) or (name1 == DustNamesU.Platinum.Mek) or (name1 == DustNamesU.Platinum.End) then
+			return Colors.Platinum, "Plat"
+		elseif (name1 == DustNamesU.Electrum.IC2) or (name1 == DustNamesU.Electrum.TEx) or (name1 == DustNamesU.Electrum.Mek) or (name1 == DustNamesU.Electrum.End) then
+			return Colors.Electrum, "Elec"
+		elseif (name1 == DustNamesU.Invar.IC2) or (name1 == DustNamesU.Invar.TEx) or (name1 == DustNamesU.Invar.Mek) or (name1 == DustNamesU.Invar.End) then
+			return Colors.Invar, "Inva"
+		elseif (name1 == DustNamesU.Signalum.IC2) or (name1 == DustNamesU.Signalum.TEx) or (name1 == DustNamesU.Signalum.Mek) or (name1 == DustNamesU.Signalum.End) then
+			return Colors.Signalum, "Sign"
+		elseif (name1 == DustNamesU.Lumium.IC2) or (name1 == DustNamesU.Lumium.TEx) or (name1 == DustNamesU.Lumium.Mek) or (name1 == DustNamesU.Lumium.End) then
+			return Colors.Lumium, "Lumi"
+		elseif (name1 == DustNamesU.Mithril.IC2) or (name1 == DustNamesU.Mithril.TEx) or (name1 == DustNamesU.Mithril.Mek) or (name1 == DustNamesU.Mithril.End) then
+			return Colors.Mithril, "Mith"
+		elseif (name1 == DustNamesU.Enderium.IC2) or (name1 == DustNamesU.Enderium.TEx) or (name1 == DustNamesU.Enderium.Mek) or (name1 == DustNamesU.Enderium.End) then
+			return Colors.Enderium, "Ende"
+		elseif (name1 == DustNamesU.HOPGraphite) then
+			return Colors.HOPGraphite, "HOPG"
+		elseif (name1 == DustNamesU.Constantan) then
+			return Colors.Constantan, "Cons"
+		elseif (name1 == DustNamesU.Osmium) then
+			return Colors.Osmium, "Osmi"
+		elseif (name1 == "steelDust") then
+			return Colors.Iron, "Stee"
+		end
+	else
+		name1 = Dust.name
+		name1 = Split(name1, ':')[#Split(name1, ':')]
+		meta = Dust.damage
+
+		if (name1 == DustNames.IEn and meta == DustNames.Nickel.IEn) or (name1 == DustNames.TEx and meta == DustNames.Nickel.TEx) then
+			return Colors.Nickel, "Nick"
+		elseif (name1 == DustNames.IEn and meta == DustNames.Aluminum.IEn) or (name1 == DustNames.TCo and meta == DustNames.Aluminum.TCo) then
+			return Colors.Aluminum, "Alum"
+		elseif (name1 == DustNames.IC2 and meta == DustNames.Obsidian.IC2) or (name1 == DustNames.TEx and meta == DustNames.Obsidian.TEx)
+			or (name1 == DustNames.IEn and meta == DustNames.Obsidian.IEn) or (name1 == DustNames.Mek[2] and meta == DustNames.Obsidian.Mek)
+			or (name1 == DustNames.End and meta == DustNames.Obsidian.End) then
+			return Colors.Obsidian, "Obsi"
+		elseif (name1 == DustNames.IC2 and meta == DustNames.Gold.IC2) or (name1 == DustNames.TEx and meta == DustNames.Gold.TEx)
+			or (name1 == DustNames.IEn and meta == DustNames.Gold.IEn) or (name1 == DustNames.Mek[1] and meta == DustNames.Gold.Mek)
+			or (name1 == DustNames.End and meta == DustNames.Gold.End) then
+			return Colors.Gold, "Gold"
+		elseif (name1 == DustNames.IC2 and meta == DustNames.Iron.IC2) or (name1 == DustNames.TEx and meta == DustNames.Iron.TEx)
+			or (name1 == DustNames.IEn and meta == DustNames.Iron.IEn) or (name1 == DustNames.Mek[1] and meta == DustNames.Iron.Mek)
+			or (name1 == DustNames.End and meta == DustNames.Iron.End) then
+			return Colors.Iron, "Iron"
+		elseif (name1 == DustNames.IC2 and meta == DustNames.Silver.IC2) or (name1 == DustNames.TEx and meta == DustNames.Silver.TEx)
+			or (name1 == DustNames.IEn and meta == DustNames.Silver.IEn) or (name1 == DustNames.Mek[1] and meta == DustNames.Silver.Mek) then
+			return Colors.Silver, "Silv"
+		elseif (name1 == DustNames.IC2 and meta == DustNames.Copper.IC2) or (name1 == DustNames.TEx and meta == DustNames.Copper.TEx)
+			or (name1 == DustNames.IEn and meta == DustNames.Copper.IEn) or (name1 == DustNames.Mek[1] and meta == DustNames.Copper.Mek)
+			or (name1 == DustNames.End and meta == DustNames.Copper.End) then
+			return Colors.Copper, "Copp"
+		elseif (name1 == DustNames.IC2 and meta == DustNames.Coal.IC2) or (name1 == DustNames.TEx and meta == DustNames.Coal.TEx)
+			or (name1 == DustNames.End and meta == DustNames.Coal.End) then
+			return Colors.Coal, "Coal"
+		elseif (name1 == DustNames.End and meta == 5) then
+			return Colors.Enderium, "Ende"
+		elseif (name1 == DustNames.IEn and meta == 17) then
+			return Colors.Coal, "Coke"
+		elseif (name1 == "itemMaterial" and meta == 0) then
+			return Colors.Silicon, "Sili"
+		elseif (name1 == "redstone" and meta == 0) then
+			return Colors.Redstone, "Reds"
+		elseif (name1 == "glowstone_dust" and meta == 0) then
+			return Colors.Glowstone, "Glow"
+		end
+	end
+
+	return 0xFFFFFF, name1
+end
+
+function GetOreColor(Ore)
+	local name = Ore.nameUnlocalized
+	local gavnoDavayPoNovoy = true
+
+	if name then
+		name = Split(name, ".")[#Split(name, ".")]
+		::rep::
+		if name == "blockOreCopper" or name == "Copper" or name == "CopperOre" or name == "copper.name" then
+			return Colors.Copper, "Copp"
+		elseif name == "oreNickel" or name == "Nickel" or name == "nickel.name" then
+			return Colors.Nickel, "Nick"
+		elseif name == "oreIron" or name == "iron.name" then
+			return Colors.Iron, "Iron"
+		elseif name == "oreGold" or name == "gold.name" then
+			return Colors.Gold, "Gold"
+		elseif name == "blockOreTin" or name == "TinOre" or name == "tin.name" then
+			return Colors.Tin, "Tin "
+		elseif name == "blockOreUran" then
+			return Colors.Electrum, "Uran"
+		elseif name == "blockOreLead" or name == "Lead" or name == "lead.name" then
+			return Colors.Lead, "Lead"
+		elseif name == "Aluminum" then
+			return Colors.Aluminum, "Alum"
+		elseif name == "Silver" or name == "silver.name" then
+			return Colors.Silver, "Silv"
+		elseif name == "OsmiumOre" then
+			return Colors.Osmium, "Osmi"
+		elseif name == "mithril.name" then
+			return Colors.Mithril, "Mith"
+		elseif name == "platinum.name" then
+			return Colors.Platinum, "Plat"
+		elseif name == "brOre.0" then
+			return Colors.Electrum, "Yell"
+		end
+
+		if gavnoDavayPoNovoy then
+			name = Split(Ore.nameUnlocalized, ".")[#Split(Ore.nameUnlocalized, ".") - 1]
+			gavnoDavayPoNovoy = false
+			goto rep
+		end
+	else
+
+	end
+	
+	return 0xFFFFFF, name
+end
+
 function DrawGridInput(x, y, width, height, row, column)
-	local slot = 1
 
 	local function GetProgressColor(percent)
 		if percent >= 0 and percent <= 20 then
@@ -89,10 +583,12 @@ function DrawGridInput(x, y, width, height, row, column)
 			return 0xFF9F23
 		elseif percent >= 80 then
 			return 0xFFFF7C
-		else
-			return 0xFFFFFF
 		end
+		
+		return 0xFFFFFF
 	end
+
+	local slot = 1
 
 	for j = 1, row do
 		for i = 1, column do
@@ -101,18 +597,41 @@ function DrawGridInput(x, y, width, height, row, column)
 			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
 
 			if Metall then
-				GUI.DrawText(x + i * width + i - 3, y + j * height - 2 + j, "▄", 0xc6c6c6, 0x696969)
-				GUI.DrawText(x + i * width + i - 4, y + j * height - 2 + j, "▄", 0xc6c6c6, 0x696969)
-				GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)
-				GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)
-				GUI.DrawText(x + i * width + i - 4, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)
-				GUI.DrawText(x + i * width + i - 5, y + j * height - 1 + j, "▀", 0xc6c6c6, 0x696969)				
+				if Metall.name then
+					local color, name = GetIngotColor(Metall)
 
-				local ProgressColor = GetProgressColor(Metall.progress / Metall.maxProgress * 100)
-				GUI.DrawText(x + i * width + i - 1, y + j * height - 2 + j, "▌", ProgressColor, 0xFFFFFF)
-				GUI.DrawText(x + i * width + i - 1, y + j * height - 1 + j, "▌", ProgressColor, 0xFFFFFF)
-			else
-				GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
+					if color ~= 0xFFFFFF then--для слитков
+						DrawIngot(x + i * width + i - width - 1, y + j * height + j - 2, color, 0x696969)
+					else
+						color, name = GetDustColor(Metall)
+						if color ~= 0xFFFFFF then--для пыли
+							DrawDust(x + i * width + i - width - 1, y + j * height + j - 2, color, 0x696969)
+							GUI.DrawText(x + i * width + i - 5, y + j * height + j, name, 0x111111, 0xFFFFFF)
+						else--для руд
+							color, name = GetOreColor(Metall)
+							DrawOre(x + i * width + i - width - 1, y + j * height + j - 2, color, 0x8D8D8D)
+							GUI.DrawText(x + i * width + i - 5, y + j * height + j, name, 0x111111, 0xFFFFFF)
+						end
+					end
+					local size = Metall.size
+					if size > 1 then
+						if unicode.len(size) > 1 then
+							GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, Metall.size, 0x111111, color)
+						else
+							GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, Metall.size, 0x111111, color)
+						end
+					end
+
+					local ProgressColor = GetProgressColor(Metall.progress / Metall.maxProgress * 100)
+					GUI.DrawText(x + i * width + i - 1, y + j * height - 2 + j, "▌", ProgressColor, 0xFFFFFF)
+					GUI.DrawText(x + i * width + i - 1, y + j * height - 1 + j, "▌", ProgressColor, 0xFFFFFF)
+
+				else
+					GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
+					GUI.DrawRect(x + i * width + i - 1, y + j * height - 2 + j, 1, 2, 0xFFFFFF, 0xFFFFFF)
+
+					GUI.DrawRect(x + i * width + i - 5, y + j * height + j, 4, 1, 0xFFFFFF, 0xFFFFFF)
+				end
 			end
 			slot = slot + 1
 		end
@@ -129,12 +648,24 @@ function DrawGridAdditive(x, y, width, height, row, column)
 			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
 
 			if Dust then
-				GUI.DrawText(x + i * width + i - 3, y + j * height - 2 + j, "▄", 0x333333, 0x111111)
-				GUI.DrawText(x + i * width + i - 4, y + j * height - 2 + j, "▄", 0x333333, 0x111111)
-				GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, "▀", 0x111111, 0x696969)
-				GUI.DrawText(x + i * width + i - 5, y + j * height - 1 + j, "▀", 0x111111, 0x696969)
-				GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, "▀", 0x333333, 0x111111)
-				GUI.DrawText(x + i * width + i - 4, y + j * height - 1 + j, "▀", 0x333333, 0x111111)
+				if Dust.name then
+					color, name = GetDustColor(Dust)
+
+					DrawDust(x + i * width + i - width - 1, y + j * height + j - 2, color, 0x696969)
+
+					GUI.DrawText(x + i * width + i - 5, y + j * height + j, name, 0x111111, 0xFFFFFF)
+
+					local size = Dust.size
+					if size > 1 then
+						if unicode.len(size) > 1 then
+							GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, Dust.size, 0x111111, color)
+						else
+							GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, Dust.size, 0x111111, color)
+						end
+					end
+				end
+			else
+				GUI.DrawRect(x + i * width + i - 5, y + j * height + j, 4, 1, 0x111111, 0xFFFFFF)
 			end
 
 			slot = slot + 1
@@ -144,6 +675,7 @@ end
 
 function DrawGridOutput(x, y, width, height, row, column)
 	local slot = 1
+	FillSlots = 0
 
 	for j = 1, row do
 		for i = 1, column do
@@ -152,33 +684,70 @@ function DrawGridOutput(x, y, width, height, row, column)
 			GUI.DrawRect(x + i * width + i - 5, y + j * height - 2 + j, width, height, 0x696969, 0x696969)
 
 			if NewMetall then
-				GUI.DrawText(x + i * width + i - 3, y + j * height - 2 + j, "▄", 0xB8E0E0, 0x696969)
-				GUI.DrawText(x + i * width + i - 4, y + j * height - 2 + j, "▄", 0xB8E0E0, 0x696969)
-				GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
-				GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
-				GUI.DrawText(x + i * width + i - 4, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
-				GUI.DrawText(x + i * width + i - 5, y + j * height - 1 + j, "▀", 0xB8E0E0, 0x696969)
+				if NewMetall.name then
+					local color, name = GetIngotColor(NewMetall)
+
+					DrawIngot(x + i * width + i - width - 1, y + j * height + j - 2, color, 0x696969)
+
+					GUI.DrawText(x + i * width + i - 5, y + j * height + j, name, 0x111111, 0xFFFFFF)
+
+					local size = NewMetall.size
+					if size > 1 then
+						if unicode.len(size) > 1 then
+							GUI.DrawText(x + i * width + i - 3, y + j * height - 1 + j, NewMetall.size, 0x111111, color)
+						else
+							GUI.DrawText(x + i * width + i - 2, y + j * height - 1 + j, NewMetall.size, 0x111111, color)
+						end
+					end
+			
+					if size >= NewMetall.maxSize then
+						FillSlots = FillSlots + 1
+					end
+				end
+			else				
+				GUI.DrawRect(x + i * width + i - 5, y + j * height + j, 4, 1, 0x111111, 0xFFFFFF)
 			end
 
 			slot = slot + 1
 		end
+	end
+
+	if FillSlots >= row*column then
+		isNormalOut = false
+	else
+		isNormalOut = true
 	end
 end
 
 function DrawRectSlag(x, y, width, height)
 	local Slag = fu.getSlagStack()
 
-	GUI.DrawRect(x + 10, y + 1, width, height, 0x696969, 0x696969)
+	GUI.DrawRect(x, y + 1, width, height, 0x696969, 0x696969)
 
 	if Slag then
-		GUI.DrawText(x + 13, y + 1, "▄", 0xBC9685, 0x696969)
-		GUI.DrawText(x + 12, y + 1, "█", 0x604C44, 0xFFFFFF)
-		GUI.DrawText(x + 11, y + 1, "▄", 0x96776A, 0xBC9685)
-		GUI.DrawText(x + 10, y + 1, "▄", 0xA88677, 0x604C44)
-		GUI.DrawText(x + 13, y + 2, "█", 0xA88677, 0xFFFFFF)
-		GUI.DrawText(x + 12, y + 2, "▄", 0x96776A, 0xBC9685)
-		GUI.DrawText(x + 11, y + 2, "▄", 0x604C44, 0xA88677)
-		GUI.DrawText(x + 10, y + 2, "▄", 0x696969, 0xBC9685)
+		GUI.DrawText(x + width - 1, y + 1, "▄", 0xBC9685, 0x696969)
+		GUI.DrawText(x + width - 2, y + 1, "█", 0x604C44, 0xFFFFFF)
+		GUI.DrawText(x + width - 3, y + 1, "▄", 0x96776A, 0xBC9685)
+		GUI.DrawText(x + width - 4, y + 1, "▄", 0xA88677, 0x604C44)
+		GUI.DrawText(x + width - 1, y + 2, "█", 0xA88677, 0xFFFFFF)
+		GUI.DrawText(x + width - 2, y + 2, "▄", 0x96776A, 0xBC9685)
+		GUI.DrawText(x + width - 3, y + 2, "▄", 0x604C44, 0xA88677)
+		GUI.DrawText(x + width - 4, y + 2, "▄", 0x696969, 0xBC9685)
+
+		local size = Slag.size
+		if size > 1 then
+			if unicode.len(size) > 1 then
+				GUI.DrawText(x + width - 2, y + height, Slag.size, 0x111111, 0xA88677)
+			else
+				GUI.DrawText(x + width - 1, y + height, Slag.size, 0x111111, 0xA88677)
+			end
+		end
+
+		if size >= Slag.maxSize then
+			isNormalSlag = false
+		else
+			isNormalSlag = true
+		end
 	end
 end
 
@@ -201,11 +770,23 @@ function loop()
 		EnS2 = fu.getEnergyStored()
 
 		DrawStatus()
+
+
 		DrawGridElectrode(28, 4, 4, 2, 1, 3)
 		DrawGridInput(10, 7, 4, 2, 4, 3)
 		DrawGridAdditive(43, 7, 4, 2, 2, 2)
 		DrawGridOutput(28, 13, 4, 2, 2, 3)
-		DrawRectSlag(33, 16, 4, 2)
+		DrawRectSlag(43, 16, 4, 2)
+
+		if (not isNormalSlag) and (not isNormalOut) then
+			GUI.DrawText(2, 24, "Работа машины приостановлена, так как слот для шлака переполнен", 0xb30000, 0xFFFFFF)
+		elseif not isNormalOut then
+			GUI.DrawText(2, 24, "Работа машины приостановлена, так как выходные слоты переполнены", 0xb30000, 0xFFFFFF)
+		elseif not isNormalSlag then
+			GUI.DrawText(2, 24, "Работа машины приостановлена, так как все слоты переполнены", 0xb30000, 0xFFFFFF)
+		else
+			GUI.DrawRect(2, 24, w - 15, 1, 0xFFFFFF, 0xFFFFFF)
+		end
 
 		--ProgressBarText
 		local EnergyPercent = math.floor(EnS2 / MaxEn * 100)
@@ -229,6 +810,9 @@ end
 
 local Exit = false
 local status
+isNormalSlag = true
+isNormalOut = true
+
 MaxEn = fu.getMaxEnergyStored()
 
 status = fu.isActive()
@@ -243,6 +827,7 @@ GUI.DrawButton(w - 13, 8, {"", "Выключить ", ""}, true)
 
 GUI.DrawButton(w - 2, 1, {"▌"}, false, 0xcccccc, 0x333333)
 GUI.DrawButton(w - 1, 1, {"←╴"}, false, 0xcccccc, 0x333333)
+
 
 event.listen('touch', touch)
 loop()
